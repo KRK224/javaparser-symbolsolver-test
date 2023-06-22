@@ -39,6 +39,8 @@ public class App {
 
   };
 
+  private static List<CompilationUnit> cuList = new ArrayList<CompilationUnit>();
+
   public static void main(String[] args) throws Exception {
 
     JavaParserTypeSolver javaParserTypeSolver = new JavaParserTypeSolver(new File(SRC_PATH));
@@ -68,8 +70,14 @@ public class App {
 
           if (optionalCompilationUnit.isPresent()) {
             CompilationUnit cu = optionalCompilationUnit.get();
+            cuList.add(cu);
 
             System.out.println("cu:::" + cu.getStorage().get().getFileName());
+            String fileName = cu.getStorage().get().getFileName();
+
+            if (!fileName.equals("Game.java")) {
+              continue;
+            }
 
             cu.findAll(MethodCallExpr.class).forEach(node -> {
 
@@ -88,29 +96,50 @@ public class App {
 
       }
 
-      for (ParseResult<CompilationUnit> parseResult : parseResults) {
-        try {
-          Optional<CompilationUnit> optionalCompilationUnit = parseResult.getResult();
-
-          if (optionalCompilationUnit.isPresent()) {
-            CompilationUnit cu = optionalCompilationUnit.get();
-
-            System.out.println("cu:::" + cu.getStorage().get().getFileName());
-            cu.findAll(MethodDeclaration.class).forEach(mdNode -> {
-              System.out.println("MethodDeclaration 자신 출력::: " + mdNode.getSignature());
-              if (!mdNode.getData(childList).isEmpty()) {
-                System.out.println("\n=============");
-                System.out.println("호출 리스트 출력:::: ");
-                mdNode.getData(childList).stream().forEach(System.out::println);
-                System.out.println("=============\n");
-              }
-
-            });
-          }
-        } catch (Exception e) {
-
+      for (CompilationUnit cu : cuList) {
+        if (!cu.getStorage().get().getFileName().equals("GameStatus.java")) {
+          continue;
         }
+
+        System.out.println("cu:::" + cu.getStorage().get().getFileName());
+        cu.findAll(MethodDeclaration.class).forEach(mdNode -> {
+          System.out.println(mdNode.getDeclarationAsString());
+          if (mdNode.containsData(childList)) {
+            System.out.println("=============");
+            System.out.println("MethodDeclaration 자신 출력::: " + mdNode.resolve().getQualifiedSignature());
+            System.out.println("호출 리스트 출력:::: ");
+            mdNode.getData(childList).stream().forEach(System.out::println);
+            System.out.println("=============\n");
+          }
+
+        });
       }
+
+      // for (ParseResult<CompilationUnit> parseResult : parseResults) {
+      // try {
+      // Optional<CompilationUnit> optionalCompilationUnit = parseResult.getResult();
+
+      // if (optionalCompilationUnit.isPresent()) {
+      // CompilationUnit cu = optionalCompilationUnit.get();
+
+      // System.out.println("cu:::" + cu.getStorage().get().getFileName());
+      // cu.findAll(MethodDeclaration.class).forEach(mdNode -> {
+
+      // if (mdNode.containsData(childList)) {
+      // System.out.println("=============");
+      // System.out.println("MethodDeclaration 자신 출력::: " +
+      // mdNode.resolve().getQualifiedSignature());
+      // System.out.println("호출 리스트 출력:::: ");
+      // mdNode.getData(childList).stream().forEach(System.out::println);
+      // System.out.println("=============\n");
+      // }
+
+      // });
+      // }
+      // } catch (Exception e) {
+
+      // }
+      // }
 
     }
   }
@@ -124,18 +153,43 @@ public class App {
       System.out.println("className.getQualifiedSignature()::: " + node.resolve().getQualifiedSignature());
       System.out.println("getQualifiedName()::: " + node.resolve().getQualifiedName());
       System.out.println("getSignature()::: " + node.resolve().getSignature());
-      List<String> meNameList = new ArrayList<String>();
-      System.out.println("node.toString " + node.toString());
-      meNameList.add(node.toString());
+
       Optional<MethodDeclaration> md = node.resolve().toAst(MethodDeclaration.class);
       if (md.isPresent()) {
+        // System.out.println("-----------");
+        // System.out.println("testsetekajklaj:::::: " +
+        // md.get().containsData(childList));
+        // System.out.println("-----------");
+        MethodDeclaration refDeclaration = md.get();
+        System.out.println(refDeclaration.getSignature());
+        if (refDeclaration.getSignature().toString().equals("getCode()")) {
+          System.out.println("찾았다!!!");
+        }
+        if (!md.get().containsData(childList)) {
+          List<String> meNameList = new ArrayList<String>();
+          System.out.println("현재 datakey 없음");
+          // System.out.println("node.toString " + node.toString());
+          meNameList.add(node.toString());
+          // System.out.println("setData 중...");
+          md.get().setData(childList, meNameList);
+          // System.out.println("setData 완료");
+          // System.out.println("getData 테스트");
+          System.out.println("getDataKey result:::: " + md.get().getData(childList));
+          System.out.println("getKeySet:::: " + md.get().getDataKeys());
+          // System.out.println("직접 접근해서 가져오기 성공");
+        } else {
+          System.out.println("현재 datakey 있음:::" + md.get().getDataKeys());
+          List<String> tempMeNameList = md.get().getData(childList);
+          tempMeNameList.add(node.toString());
+          // System.out.println("setData 중...");
+          md.get().setData(childList, tempMeNameList);
+          // System.out.println("setData 완료");
+          // System.out.println("getData 테스트");
+          System.out.println("getDataKey result:::: " + md.get().getData(childList));
+          System.out.println("getKeySet:::: " + md.get().getDataKeys());
+          // System.out.println("직접 접근해서 가져오기 성공");
+        }
 
-        System.out.println("setData 중...");
-        md.get().setData(childList, meNameList);
-        System.out.println("setData 완료");
-        System.out.println("getData 테스트");
-        System.out.println(md.get().getData(childList));
-        System.out.println("직접 접근해서 가져오기 성공");
       }
       return true;
 
