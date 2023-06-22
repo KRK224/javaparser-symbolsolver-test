@@ -3,6 +3,7 @@ package com.javaparser;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -10,6 +11,7 @@ import com.github.javaparser.ParseResult;
 import com.github.javaparser.ParserConfiguration;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.DataKey;
+import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.resolution.UnsolvedSymbolException;
@@ -31,21 +33,11 @@ import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeS
 
 public class App {
 
-  // singleton
-  public static class Test {
-    private int i = 0;
-
-    Test(int i) {
-      this.i = i;
-    }
-
-    public int getI() {
-      return this.i;
-    }
-
-  }
-
   private static final String SRC_PATH = "src/main/resources/java-baseball/src/main/java";
+
+  private static DataKey<List<String>> childList = new DataKey<List<String>>() {
+
+  };
 
   public static void main(String[] args) throws Exception {
 
@@ -78,25 +70,11 @@ public class App {
             CompilationUnit cu = optionalCompilationUnit.get();
 
             System.out.println("cu:::" + cu.getStorage().get().getFileName());
-            // AtomicInteger ordinal = new AtomicInteger(0);
 
             cu.findAll(MethodCallExpr.class).forEach(node -> {
 
               System.out.println("********");
               System.out.println(" * Method Call::: " + node);
-              // Test test1 = new Test(ordinal.getAndIncrement());
-
-              // DataKey<Test> myTest = new DataKey<Test>() {
-
-              // };
-
-              // System.out.println("=============");
-              // node.setData(myTest, test1);
-              // System.out.println(node.getData(myTest).getI());
-              // System.out.println("=============");
-
-              // reflection type MethodCallExpr throwing UnsolvedSymbolException
-              // System.out.println(node.resolve().getQualifiedSignature());
 
               printMethodReference(node);
 
@@ -110,16 +88,55 @@ public class App {
 
       }
 
+      for (ParseResult<CompilationUnit> parseResult : parseResults) {
+        try {
+          Optional<CompilationUnit> optionalCompilationUnit = parseResult.getResult();
+
+          if (optionalCompilationUnit.isPresent()) {
+            CompilationUnit cu = optionalCompilationUnit.get();
+
+            System.out.println("cu:::" + cu.getStorage().get().getFileName());
+            cu.findAll(MethodDeclaration.class).forEach(mdNode -> {
+              System.out.println("MethodDeclaration 자신 출력::: " + mdNode.getSignature());
+              if (!mdNode.getData(childList).isEmpty()) {
+                System.out.println("\n=============");
+                System.out.println("호출 리스트 출력:::: ");
+                mdNode.getData(childList).stream().forEach(System.out::println);
+                System.out.println("=============\n");
+              }
+
+            });
+          }
+        } catch (Exception e) {
+
+        }
+      }
+
     }
   }
 
-  public static boolean printMethodReference(MethodCallExpr node) throws UnsolvedSymbolException {
+  public static boolean printMethodReference(MethodCallExpr node)
+      throws UnsolvedSymbolException {
     try {
       // node.resolve();
       System.out.println("packageName::: " + node.resolve().getPackageName());
       System.out.println("className:::" + node.resolve().getClassName());
-      System.out.println("className.methodDeclaration::: " +
-          node.resolve().getQualifiedSignature());
+      System.out.println("className.getQualifiedSignature()::: " + node.resolve().getQualifiedSignature());
+      System.out.println("getQualifiedName()::: " + node.resolve().getQualifiedName());
+      System.out.println("getSignature()::: " + node.resolve().getSignature());
+      List<String> meNameList = new ArrayList<String>();
+      System.out.println("node.toString " + node.toString());
+      meNameList.add(node.toString());
+      Optional<MethodDeclaration> md = node.resolve().toAst(MethodDeclaration.class);
+      if (md.isPresent()) {
+
+        System.out.println("setData 중...");
+        md.get().setData(childList, meNameList);
+        System.out.println("setData 완료");
+        System.out.println("getData 테스트");
+        System.out.println(md.get().getData(childList));
+        System.out.println("직접 접근해서 가져오기 성공");
+      }
       return true;
 
     } catch (UnsolvedSymbolException e) {
