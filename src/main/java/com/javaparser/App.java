@@ -34,7 +34,7 @@ public class App {
   private static final String SRC_PATH = "src/main/resources/java-baseball/src/main/java";
 
   private static CompilationUnit tempGameStatusCu = null;
-  private static Node tempGameStatusNode = null;
+  private static Node tempGameStatusNodeFromToAst = null;
 
   private static DataKey<List<String>> childList = new DataKey<List<String>>() {
 
@@ -101,7 +101,7 @@ public class App {
         }
       }
 
-      System.out.println("\nprint MethodDeclaration and its MethodCallExpr -------------------------\n");
+      System.out.println("\n check MethodDeclaration and its MethodCallExpr -------------------------\n");
 
       for (ParseResult<CompilationUnit> parseResult : parseResults) {
         try {
@@ -116,19 +116,20 @@ public class App {
               continue;
             }
 
-            System.out.println(cu.getChildNodes());
             System.out.println(cu);
-            System.out.println(tempGameStatusNode);
-
-            System.out.println(cu.getChildNodes().get(1) == tempGameStatusNode);
+            System.out.println(tempGameStatusCu);
+            System.out.println(cu == tempGameStatusCu);
+            System.out.println(tempGameStatusNodeFromToAst);
+            CompilationUnit cuFromNode = tempGameStatusNodeFromToAst.findCompilationUnit().get();
+            System.out.println(cuFromNode);
 
             cu.findAll(MethodDeclaration.class).forEach(mdNode -> {
               System.out.println(mdNode.getDeclarationAsString());
               if (mdNode.containsData(childList)) {
                 System.out.println("=============");
-                System.out.println("MethodDeclaration 자신 출력::: " +
+                System.out.println("MethodDeclaration.resolve().getQualifiedSignature::: " +
                     mdNode.resolve().getQualifiedSignature());
-                System.out.println("호출 리스트 출력:::: ");
+                System.out.println("its MethodCallExpr List:::: ");
                 mdNode.getData(childList).stream().forEach(System.out::println);
                 System.out.println("=============\n");
               }
@@ -163,7 +164,7 @@ public class App {
   public static boolean printMethodReference(MethodCallExpr node)
       throws UnsolvedSymbolException {
     try {
-      // node.resolve();
+
       System.out.println("packageName::: " + node.resolve().getPackageName());
       System.out.println("className:::" + node.resolve().getClassName());
       System.out.println("className.getQualifiedSignature()::: " + node.resolve().getQualifiedSignature());
@@ -181,48 +182,35 @@ public class App {
         MethodDeclaration refDeclaration = md.get();
         System.out.println(refDeclaration.getSignature());
         System.out.println(refDeclaration.getMetaModel().getTypeName());
+
         if (refDeclaration.getSignature().toString().equals("getCode()")) {
-          System.out.println("getCode() 찾았다!!!");
           Optional<Node> parentNodeOptional = null;
           Node parentNode = refDeclaration;
+
+          // search the cu of resolved MethodDeclaration.
           do {
             parentNodeOptional = parentNode.getParentNode();
-            System.out.println("parentNode 찾는 과정:::");
-            System.out.println(parentNodeOptional.get());
             parentNode = parentNodeOptional.get();
 
           } while (parentNode.getParentNode().isPresent());
 
           System.out.println(parentNode.getMetaModel().getTypeName());
-          System.out.println(parentNode);
-
-          tempGameStatusNode = parentNode;
+          tempGameStatusNodeFromToAst = parentNode;
           System.out.println(parentNode);
 
         }
         if (!md.get().containsData(childList)) {
           List<String> meNameList = new ArrayList<String>();
-          System.out.println("현재 datakey 없음");
-          // System.out.println("node.toString " + node.toString());
+          System.out.println("DataKey is absent!");
           meNameList.add(node.toString());
-          // System.out.println("setData 중...");
           md.get().setData(childList, meNameList);
-          // System.out.println("setData 완료");
-          // System.out.println("getData 테스트");
-          System.out.println("getDataKey result:::: " + md.get().getData(childList));
-          System.out.println("getKeySet:::: " + md.get().getDataKeys());
-          // System.out.println("직접 접근해서 가져오기 성공");
+          System.out.println("check DataKey:::: " + md.get().getData(childList));
         } else {
-          System.out.println("현재 datakey 있음:::" + md.get().getDataKeys());
+          System.out.println("DataKey is present:::" + md.get().getDataKeys());
           List<String> tempMeNameList = md.get().getData(childList);
           tempMeNameList.add(node.toString());
-          // System.out.println("setData 중...");
           md.get().setData(childList, tempMeNameList);
-          // System.out.println("setData 완료");
-          // System.out.println("getData 테스트");
-          System.out.println("getDataKey result:::: " + md.get().getData(childList));
-          System.out.println("getKeySet:::: " + md.get().getDataKeys());
-          // System.out.println("직접 접근해서 가져오기 성공");
+          System.out.println("check DataKey:::: " + md.get().getData(childList));
         }
 
       }
