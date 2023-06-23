@@ -118,10 +118,24 @@ public class App {
 
             System.out.println(cu);
             System.out.println(tempGameStatusNodeFromToAst);
+
             CompilationUnit cuFromNode = tempGameStatusNodeFromToAst.findCompilationUnit().get();
             System.out.println(cuFromNode);
 
             cu.findAll(MethodDeclaration.class).forEach(mdNode -> {
+              System.out.println(mdNode.getDeclarationAsString());
+              if (mdNode.containsData(childList)) {
+                System.out.println("=============");
+                System.out.println("MethodDeclaration.resolve().getQualifiedSignature::: " +
+                    mdNode.resolve().getQualifiedSignature());
+                System.out.println("its MethodCallExpr List:::: ");
+                mdNode.getData(childList).stream().forEach(System.out::println);
+                System.out.println("=============\n");
+              }
+
+            });
+
+            tempGameStatusNodeFromToAst.findAll(MethodDeclaration.class).forEach(mdNode -> {
               System.out.println(mdNode.getDeclarationAsString());
               if (mdNode.containsData(childList)) {
                 System.out.println("=============");
