@@ -117,8 +117,6 @@ public class App {
             }
 
             System.out.println(cu);
-            System.out.println(tempGameStatusCu);
-            System.out.println(cu == tempGameStatusCu);
             System.out.println(tempGameStatusNodeFromToAst);
             CompilationUnit cuFromNode = tempGameStatusNodeFromToAst.findCompilationUnit().get();
             System.out.println(cuFromNode);
