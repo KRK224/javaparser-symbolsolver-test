@@ -4,7 +4,6 @@ import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import com.github.javaparser.ParseResult;
@@ -21,7 +20,6 @@ import com.github.javaparser.utils.ProjectRoot;
 import com.github.javaparser.utils.SourceRoot;
 
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeSolver;
@@ -34,6 +32,9 @@ import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeS
 public class App {
 
   private static final String SRC_PATH = "src/main/resources/java-baseball/src/main/java";
+
+  private static CompilationUnit tempGameStatusCu = null;
+  private static Node tempGameStatusNode = null;
 
   private static DataKey<List<String>> childList = new DataKey<List<String>>() {
 
@@ -75,6 +76,10 @@ public class App {
             System.out.println("cu:::" + cu.getStorage().get().getFileName());
             String fileName = cu.getStorage().get().getFileName();
 
+            if (fileName.equals("GameStatus.java")) {
+              tempGameStatusCu = cu;
+            }
+
             if (!fileName.equals("Game.java")) {
               continue;
             }
@@ -90,55 +95,66 @@ public class App {
             });
 
           }
+
         } catch (UnsolvedSymbolException e) {
           throw e;
         }
-
       }
 
-      for (CompilationUnit cu : cuList) {
-        if (!cu.getStorage().get().getFileName().equals("GameStatus.java")) {
-          continue;
-        }
+      System.out.println("\nprint MethodDeclaration and its MethodCallExpr -------------------------\n");
 
-        System.out.println("cu:::" + cu.getStorage().get().getFileName());
-        cu.findAll(MethodDeclaration.class).forEach(mdNode -> {
-          System.out.println(mdNode.getDeclarationAsString());
-          if (mdNode.containsData(childList)) {
-            System.out.println("=============");
-            System.out.println("MethodDeclaration 자신 출력::: " + mdNode.resolve().getQualifiedSignature());
-            System.out.println("호출 리스트 출력:::: ");
-            mdNode.getData(childList).stream().forEach(System.out::println);
-            System.out.println("=============\n");
+      for (ParseResult<CompilationUnit> parseResult : parseResults) {
+        try {
+          Optional<CompilationUnit> optionalCompilationUnit = parseResult.getResult();
+
+          if (optionalCompilationUnit.isPresent()) {
+            CompilationUnit cu = optionalCompilationUnit.get();
+            System.out.println("cu:::" + cu.getStorage().get().getFileName());
+            String fileName = cu.getStorage().get().getFileName();
+
+            if (!fileName.equals("GameStatus.java")) {
+              continue;
+            }
+
+            System.out.println(cu.getChildNodes());
+            System.out.println(cu);
+            System.out.println(tempGameStatusNode);
+
+            System.out.println(cu.getChildNodes().get(1) == tempGameStatusNode);
+
+            cu.findAll(MethodDeclaration.class).forEach(mdNode -> {
+              System.out.println(mdNode.getDeclarationAsString());
+              if (mdNode.containsData(childList)) {
+                System.out.println("=============");
+                System.out.println("MethodDeclaration 자신 출력::: " +
+                    mdNode.resolve().getQualifiedSignature());
+                System.out.println("호출 리스트 출력:::: ");
+                mdNode.getData(childList).stream().forEach(System.out::println);
+                System.out.println("=============\n");
+              }
+
+            });
+
           }
 
-        });
+        } catch (Exception e) {
+          throw e;
+        }
       }
 
-      // for (ParseResult<CompilationUnit> parseResult : parseResults) {
-      // try {
-      // Optional<CompilationUnit> optionalCompilationUnit = parseResult.getResult();
-
-      // if (optionalCompilationUnit.isPresent()) {
-      // CompilationUnit cu = optionalCompilationUnit.get();
-
+      // for (CompilationUnit cu : cuList) {
       // System.out.println("cu:::" + cu.getStorage().get().getFileName());
       // cu.findAll(MethodDeclaration.class).forEach(mdNode -> {
-
+      // System.out.println(mdNode.getDeclarationAsString());
       // if (mdNode.containsData(childList)) {
       // System.out.println("=============");
-      // System.out.println("MethodDeclaration 자신 출력::: " +
+      // System.out.println("Resolved MethodDeclaration Signature::::: " +
       // mdNode.resolve().getQualifiedSignature());
-      // System.out.println("호출 리스트 출력:::: ");
+      // System.out.println("containing MethodCallExpr:::: ");
       // mdNode.getData(childList).stream().forEach(System.out::println);
       // System.out.println("=============\n");
       // }
-
       // });
-      // }
-      // } catch (Exception e) {
-
-      // }
       // }
 
     }
@@ -154,16 +170,35 @@ public class App {
       System.out.println("getQualifiedName()::: " + node.resolve().getQualifiedName());
       System.out.println("getSignature()::: " + node.resolve().getSignature());
 
+      // resolve to AST
       Optional<MethodDeclaration> md = node.resolve().toAst(MethodDeclaration.class);
+
       if (md.isPresent()) {
         // System.out.println("-----------");
-        // System.out.println("testsetekajklaj:::::: " +
+        // System.out.println("get Existed childList:::::: " +
         // md.get().containsData(childList));
         // System.out.println("-----------");
         MethodDeclaration refDeclaration = md.get();
         System.out.println(refDeclaration.getSignature());
+        System.out.println(refDeclaration.getMetaModel().getTypeName());
         if (refDeclaration.getSignature().toString().equals("getCode()")) {
-          System.out.println("찾았다!!!");
+          System.out.println("getCode() 찾았다!!!");
+          Optional<Node> parentNodeOptional = null;
+          Node parentNode = refDeclaration;
+          do {
+            parentNodeOptional = parentNode.getParentNode();
+            System.out.println("parentNode 찾는 과정:::");
+            System.out.println(parentNodeOptional.get());
+            parentNode = parentNodeOptional.get();
+
+          } while (parentNode.getParentNode().isPresent());
+
+          System.out.println(parentNode.getMetaModel().getTypeName());
+          System.out.println(parentNode);
+
+          tempGameStatusNode = parentNode;
+          System.out.println(parentNode);
+
         }
         if (!md.get().containsData(childList)) {
           List<String> meNameList = new ArrayList<String>();
