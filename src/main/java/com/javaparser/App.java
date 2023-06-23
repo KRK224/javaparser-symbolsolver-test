@@ -143,21 +143,6 @@ public class App {
         }
       }
 
-      // for (CompilationUnit cu : cuList) {
-      // System.out.println("cu:::" + cu.getStorage().get().getFileName());
-      // cu.findAll(MethodDeclaration.class).forEach(mdNode -> {
-      // System.out.println(mdNode.getDeclarationAsString());
-      // if (mdNode.containsData(childList)) {
-      // System.out.println("=============");
-      // System.out.println("Resolved MethodDeclaration Signature::::: " +
-      // mdNode.resolve().getQualifiedSignature());
-      // System.out.println("containing MethodCallExpr:::: ");
-      // mdNode.getData(childList).stream().forEach(System.out::println);
-      // System.out.println("=============\n");
-      // }
-      // });
-      // }
-
     }
   }
 
@@ -168,17 +153,11 @@ public class App {
       System.out.println("packageName::: " + node.resolve().getPackageName());
       System.out.println("className:::" + node.resolve().getClassName());
       System.out.println("className.getQualifiedSignature()::: " + node.resolve().getQualifiedSignature());
-      System.out.println("getQualifiedName()::: " + node.resolve().getQualifiedName());
-      System.out.println("getSignature()::: " + node.resolve().getSignature());
 
       // resolve to AST
       Optional<MethodDeclaration> md = node.resolve().toAst(MethodDeclaration.class);
 
       if (md.isPresent()) {
-        // System.out.println("-----------");
-        // System.out.println("get Existed childList:::::: " +
-        // md.get().containsData(childList));
-        // System.out.println("-----------");
         MethodDeclaration refDeclaration = md.get();
         System.out.println(refDeclaration.getSignature());
         System.out.println(refDeclaration.getMetaModel().getTypeName());
