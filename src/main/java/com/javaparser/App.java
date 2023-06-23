@@ -31,20 +31,6 @@ import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeS
 
 public class App {
 
-  // singleton
-  public static class Test {
-    private int i = 0;
-
-    Test(int i) {
-      this.i = i;
-    }
-
-    public int getI() {
-      return this.i;
-    }
-
-  }
-
   private static final String SRC_PATH = "src/main/resources/java-baseball/src/main/java";
 
   public static void main(String[] args) throws Exception {
@@ -84,19 +70,6 @@ public class App {
 
               System.out.println("********");
               System.out.println(" * Method Call::: " + node);
-              // Test test1 = new Test(ordinal.getAndIncrement());
-
-              // DataKey<Test> myTest = new DataKey<Test>() {
-
-              // };
-
-              // System.out.println("=============");
-              // node.setData(myTest, test1);
-              // System.out.println(node.getData(myTest).getI());
-              // System.out.println("=============");
-
-              // reflection type MethodCallExpr throwing UnsolvedSymbolException
-              // System.out.println(node.resolve().getQualifiedSignature());
 
               printMethodReference(node);
 
