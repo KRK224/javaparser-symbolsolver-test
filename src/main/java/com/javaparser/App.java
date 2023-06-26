@@ -35,6 +35,7 @@ public class App {
 
   private static CompilationUnit tempGameStatusCu = null;
   private static Node tempGameStatusNodeFromToAst = null;
+  private static int astHashCode = 0;
 
   private static DataKey<List<String>> childList = new DataKey<List<String>>() {
 
@@ -117,6 +118,7 @@ public class App {
             }
 
             System.out.println(cu);
+            System.out.println(tempGameStatusCu);
             System.out.println(tempGameStatusNodeFromToAst);
 
             CompilationUnit cuFromNode = tempGameStatusNodeFromToAst.findCompilationUnit().get();
@@ -124,6 +126,11 @@ public class App {
 
             cu.findAll(MethodDeclaration.class).forEach(mdNode -> {
               System.out.println(mdNode.getDeclarationAsString());
+
+              if (mdNode.getSignature().toString().equals("getCode()")) {
+                System.out.println(mdNode.hashCode());
+                System.out.println(astHashCode);
+              }
               if (mdNode.containsData(childList)) {
                 System.out.println("=============");
                 System.out.println("MethodDeclaration.resolve().getQualifiedSignature::: " +
@@ -175,6 +182,8 @@ public class App {
         System.out.println(refDeclaration.getMetaModel().getTypeName());
 
         if (refDeclaration.getSignature().toString().equals("getCode()")) {
+          astHashCode = refDeclaration.hashCode();
+
           Optional<Node> parentNodeOptional = null;
           Node parentNode = refDeclaration;
 
