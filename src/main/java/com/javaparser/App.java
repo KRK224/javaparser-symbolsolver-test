@@ -14,6 +14,7 @@ import com.github.javaparser.ast.body.FieldDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.expr.MethodCallExpr;
+import com.github.javaparser.resolution.TypeSolver;
 import com.github.javaparser.resolution.UnsolvedSymbolException;
 
 import com.github.javaparser.symbolsolver.utils.SymbolSolverCollectionStrategy;
@@ -24,7 +25,9 @@ import java.util.Optional;
 
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.core.resolution.SymbolResolutionCapability;
+import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeSolver;
+import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 
 /**
  * Hello world!
@@ -34,6 +37,8 @@ import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeS
 public class App {
 
   private static final String SRC_PATH = "src/main/resources/java-baseball/src/main/java";
+
+  private static final TypeSolver reflectionSolver = new ReflectionTypeSolver(false);
 
   public static void main(String[] args) throws Exception {
 
@@ -104,7 +109,7 @@ public class App {
                 + node.getVariable(0).getType().isReferenceType());
         System.out.println(node.getVariable(0).getType());
         System.out.println(node.getVariable(0).getType().resolve()); // ReferenceType{~}
-        System.out.println(node.getVariable(0).getType().resolve().isArray()); // ReferenceType{~}
+        System.out.println("isArray::::::" + node.getVariable(0).getType().resolve().isArray()); // ReferenceType{~}
         if (node.getVariable(0).getType().resolve().isArray()) { // Array type인 경우
           System.out.println("Array 입니다!!!!!");
           // 배열인 경우, asArrayType으로 받아와서 ComponentType 가져오고 그 타입이 ReferenctType이면 받아온다!
@@ -118,8 +123,25 @@ public class App {
                     .getQualifiedName());
           }
 
-        } else {
+        } else { // 어레이가 아닌경우
+          // check whether is reflection type solver!!!
+
+          boolean checkIsInternal = isJDKPackage(
+              node.getVariable(0).getType().resolve().asReferenceType().getQualifiedName());
+
+          System.out.println("check Is Internal :::: " + checkIsInternal);
+
           System.out.println(node.getVariable(0).getType().resolve().asReferenceType().getQualifiedName());
+          System.out.println(node.getVariable(0).getType().resolve().asReferenceType().describe());
+          // 레퍼런스 타입이 Type<Parameter>를 가지고 있는지 확인
+          if (!node.getVariable(0).getType().resolve().asReferenceType().typeParametersValues().isEmpty()) {
+
+            System.out.println(
+                node.getVariable(0).getType().resolve().asReferenceType().typeParametersValues().get(0)
+                    .asReferenceType()
+                    .isJavaLangObject());
+          }
+
           System.out.println(node.getVariable(0).getType().resolve().hashCode());
         }
 
@@ -134,6 +156,15 @@ public class App {
       System.out.printf("!!!!!!!! Got an Error to find reference for \'%s\' \n", node.getVariables());
       System.out.println(e.getMessage());
       System.out.println("=================");
+      return false;
+    }
+  }
+
+  public static boolean isJDKPackage(String packageName) {
+    try {
+      reflectionSolver.solveType(packageName);
+      return true;
+    } catch (UnsolvedSymbolException e) {
       return false;
     }
   }
