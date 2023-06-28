@@ -128,6 +128,9 @@ public class App {
               System.out.println(mdNode.getDeclarationAsString());
 
               if (mdNode.getSignature().toString().equals("getCode()")) {
+                System.out.println("mdNode.resolve().getQualifiedName()" + mdNode.resolve().getQualifiedName());
+                System.out
+                    .println("mdNode.resolve().getQualifiedSignature()" + mdNode.resolve().getQualifiedSignature());
                 System.out.println(mdNode.hashCode());
                 System.out.println(astHashCode);
               }
@@ -172,6 +175,7 @@ public class App {
       System.out.println("packageName::: " + node.resolve().getPackageName());
       System.out.println("className:::" + node.resolve().getClassName());
       System.out.println("className.getQualifiedSignature()::: " + node.resolve().getQualifiedSignature());
+      System.out.println("className.getQualifiedName::: " + node.resolve().getQualifiedName());
 
       // resolve to AST
       Optional<MethodDeclaration> md = node.resolve().toAst(MethodDeclaration.class);
