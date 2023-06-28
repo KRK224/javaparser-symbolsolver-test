@@ -12,6 +12,7 @@ import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.DataKey;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.expr.MethodCallExpr;
+import com.github.javaparser.ast.expr.VariableDeclarationExpr;
 import com.github.javaparser.resolution.UnsolvedSymbolException;
 
 import com.github.javaparser.symbolsolver.utils.SymbolSolverCollectionStrategy;
@@ -66,12 +67,10 @@ public class App {
             System.out.println("cu:::" + cu.getStorage().get().getFileName());
             // AtomicInteger ordinal = new AtomicInteger(0);
 
-            cu.findAll(MethodCallExpr.class).forEach(node -> {
+            cu.findAll(VariableDeclarationExpr.class).forEach(node -> {
 
               System.out.println("********");
-              System.out.println(" * Method Call::: " + node);
-
-              printMethodReference(node);
+              System.out.println(" * Variable Declaration Expr Node::: " + node);
 
               System.out.println("********\n");
             });
