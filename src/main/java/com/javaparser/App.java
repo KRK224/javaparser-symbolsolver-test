@@ -13,6 +13,7 @@ import com.github.javaparser.ast.DataKey;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.ast.expr.VariableDeclarationExpr;
+import com.github.javaparser.ast.type.Type;
 import com.github.javaparser.resolution.TypeSolver;
 import com.github.javaparser.resolution.UnsolvedSymbolException;
 
@@ -76,6 +77,8 @@ public class App {
               System.out.println("********");
               System.out.println(" * Variable Declaration Expr Node::: " + node);
 
+              printVaraiableReference(node);
+
               System.out.println("********\n");
             });
 
@@ -100,10 +103,40 @@ public class App {
 
   public static boolean printVaraiableReference(VariableDeclarationExpr node) throws UnsolvedSymbolException {
     try {
+      System.out.println(node.getVariables());
+      Type type = node.getVariable(0).getType();
+
+      System.out.println("type 추출:: " + type);
+      if (type.isReferenceType()) {
+        System.out.println("type이 reference 타입입니다!!!");
+        if (type.resolve().isArray()) {
+          System.out.println("type이 Array Type입니다.");
+          // System.out.println(
+          // "resolve 전의 배열 타입에서 가져온 컴포넌트 타입 체크:::" +
+          // type.asArrayType().getComponentType().getClass().getTypeName());
+          // System.out.println("resolve 후에 배열 타입에서 가져온 컴포넌트 타입 체크::::"
+          // + type.resolve().asArrayType().getComponentType().getClass().getTypeName());
+          String embeddedTypeString = type.resolve().asArrayType().getComponentType().describe();
+          if (!isJDKPackage(embeddedTypeString)) {
+            System.out.println("배열에 내장된 값이 우리가 만든 레퍼런스 타입입니다!!!!");
+            System.out.println("hashcode 출력:::" + type.resolve().asArrayType().getComponentType().hashCode());
+          }
+        } else { // 배열이 아닌 경우!
+          System.out.println(type.resolve().asReferenceType().getQualifiedName()); // 타입체크?
+          System.out.println(type.resolve().asReferenceType().describe());
+          if (!isJDKPackage(type.resolve().asReferenceType().getQualifiedName())) {
+            System.out.println("우리가 만든 레퍼런스 타입입니다!!!");
+            System.out.println("hashcode 출력:::" + type.resolve().asReferenceType().hashCode());
+
+          }
+        }
+
+      }
+
       return true;
     } catch (UnsolvedSymbolException e) {
       System.out.println("=================");
-      System.out.printf("!!!!!!!! Got an Error to find reference for \'%s\' \n", node.getCommonType());
+      System.out.printf("!!!!!!!! Got an Error to find reference for \'%s\' \n", node.getVariables());
       System.out.println(e.getMessage());
       System.out.println("=================");
       return false;
