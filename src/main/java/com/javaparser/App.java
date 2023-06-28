@@ -104,6 +104,15 @@ public class App {
     }
   }
 
+  public static boolean isJDKPackage(String packageName) {
+    try {
+      reflectionSolver.solveType(packageName);
+      return true;
+    } catch (UnsolvedSymbolException e) {
+      return false;
+    }
+  }
+
   public static boolean printReferenceType(FieldDeclaration node) {
     try {
 
@@ -133,7 +142,7 @@ public class App {
                     .getQualifiedName());
           }
 
-        } else { // 어레이가 아닌경우
+        } else { // 배열이 아닌경우
           // check whether is reflection type solver!!!
 
           boolean checkIsInternal = isJDKPackage(
@@ -166,15 +175,6 @@ public class App {
       System.out.printf("!!!!!!!! Got an Error to find reference for \'%s\' \n", node.getVariables());
       System.out.println(e.getMessage());
       System.out.println("=================");
-      return false;
-    }
-  }
-
-  public static boolean isJDKPackage(String packageName) {
-    try {
-      reflectionSolver.solveType(packageName);
-      return true;
-    } catch (UnsolvedSymbolException e) {
       return false;
     }
   }
